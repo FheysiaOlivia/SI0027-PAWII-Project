@@ -75,7 +75,6 @@ app.put("/mahasiswa/:id", (req, res) => {
   res.json(mahasiswa[index]);
 });
 
-
 // TODO 5: DELETE /mahasiswa/:id -> cari index berdasarkan id,
 // jika tidak ditemukan kirim 404, jika ditemukan hapus dari array
 // dan kirim response dengan status 204

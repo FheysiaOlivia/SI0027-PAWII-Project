@@ -4,7 +4,7 @@
 // TODO Mahasiswa: lengkapi setiap bagian sesuai komentar.
 // Jalankan dengan: npm install && npm start
 // Salin .env.example menjadi .env sebelum menjalankan.
-
+require('dotenv').config();
 const express = require("express");
 const app = express();
 
@@ -12,15 +12,26 @@ const app = express();
 // (require('dotenv').config() -- letakkan di baris paling atas)
 
 // TODO 2: gunakan process.env.PORT sebagai PORT, dengan fallback 3000
-const PORT = 3000;
+const PORT = process.env.PORT??3000;
 
 // TODO 3: buat middleware kustom bernama `logger` yang mencatat
 // method, url, dan waktu (new Date().toISOString()) setiap request,
 // lalu daftarkan dengan app.use(logger) SEBELUM route lain
+function logger(req, res, next){
+  const waktu = new Date().toISOString();
+  console.log(`[${waktu}] ${req.method} ${req.url}`);
+  next(); // wajib, agar request lanjut ke handler berikutnya
+}
+app.use(logger);
 
 // TODO 4: import & gunakan middleware cors dari package 'cors'
 // agar frontend (mis. http://localhost:5173) dapat mengakses API ini
+const cors = require('cors');
 
+app.use(cors({
+  origin: 'http://localhost:5173',
+  methods : ['GET', 'POST', 'PUT', 'DELETE'],
+}));
 app.use(express.json());
 
 let mahasiswa = [
@@ -28,7 +39,15 @@ let mahasiswa = [
   { id: 2, nama: "Budi", jurusan: "Informatika" },
 ];
 
-app.get("/mahasiswa", (req, res) => {
+function cekApiKey(req, res, next){
+  const apiKey = req.headers['x-api-key'];
+
+  if(apiKey !== 'rahasia123'){
+    return res.status(401).json({messages: 'API key  tidak valid'});
+  }
+  next();
+}
+app.get("/mahasiswa",cekApiKey, (req, res) => {
   res.json(mahasiswa);
 });
 
@@ -39,7 +58,7 @@ app.get("/mahasiswa/:id", (req, res, next) => {
     if (!data) throw new Error("Data tidak ditemukan");
     res.json(data);
   } catch (err) {
-    // TODO 5: teruskan error ini ke error-handling middleware
+  next(err)
   }
 });
 
@@ -70,7 +89,25 @@ app.delete("/mahasiswa/:id", (req, res) => {
 // (paling bawah, setelah seluruh route), dengan signature
 // (err, req, res, next) -> log err.stack, lalu balas status 500
 // dengan JSON { message: 'Terjadi kesalahan pada server' }
+// app.get('/mahasiswa/:id',(req, res, next) => {
+//   try{
+//     const id = parseInt(req.params.id);
+//     const data = mahasiswa.find((m) => m.id ==== id);
+//     if (!data){
+//       throw new error('Tidak ada');
+//     }
+//     res.jsom(data);
+//   }catch(err){
+//     next(err);
+//   }
+// });
 
+app.use((err, req, res, next) => {
+  console.error(err.stcack);
+  res.status(500).json({
+    message: 'Terjadi kesalahan pada server'
+  });
+});
 app.listen(PORT, () => {
   console.log(`Server berjalan di http://localhost:${PORT}`);
 });
