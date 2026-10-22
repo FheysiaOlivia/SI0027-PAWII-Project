@@ -1,6 +1,6 @@
 {
   "info": {
-    "name": "SI MDP - Barang Hilang dan Ditemukan",
+    "name": "Lapor Barang Hilang dan Ditemukan",
     "description": "Automated API testing untuk project akhir Sistem Informasi Barang Hilang dan Ditemukan Kampus MDP",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },

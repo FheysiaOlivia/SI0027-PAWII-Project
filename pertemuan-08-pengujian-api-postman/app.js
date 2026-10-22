@@ -5,7 +5,6 @@ const PORT = 3000;
 
 app.use(express.json());
 
-// Data sementara laporan barang
 let laporan = [
   {
     id: "1",
@@ -27,7 +26,6 @@ let laporan = [
   },
 ];
 
-// GET: Semua laporan
 app.get("/api/laporan", (req, res) => {
   res.status(200).json({
     status: "success",
@@ -35,7 +33,6 @@ app.get("/api/laporan", (req, res) => {
   });
 });
 
-// GET: Detail laporan berdasarkan ID
 app.get("/api/laporan/:id", (req, res) => {
   const data = laporan.find((item) => item.id === req.params.id);
 
@@ -52,7 +49,6 @@ app.get("/api/laporan/:id", (req, res) => {
   });
 });
 
-// POST: Tambah laporan
 app.post("/api/laporan", (req, res) => {
   const { jenis, nama_barang, deskripsi, lokasi, tanggal, status } = req.body;
 
@@ -81,7 +77,6 @@ app.post("/api/laporan", (req, res) => {
   });
 });
 
-// PUT: Update laporan
 app.put("/api/laporan/:id", (req, res) => {
   const index = laporan.findIndex((item) => item.id === req.params.id);
 
@@ -104,7 +99,6 @@ app.put("/api/laporan/:id", (req, res) => {
   });
 });
 
-// DELETE: Hapus laporan
 app.delete("/api/laporan/:id", (req, res) => {
   const index = laporan.findIndex((item) => item.id === req.params.id);
 
@@ -123,7 +117,6 @@ app.delete("/api/laporan/:id", (req, res) => {
   });
 });
 
-// Menjalankan server
 app.listen(PORT, () => {
   console.log(`Server berjalan di http://localhost:${PORT}`);
 });
