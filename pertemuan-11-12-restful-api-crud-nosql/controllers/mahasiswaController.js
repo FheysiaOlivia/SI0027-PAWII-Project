@@ -1,30 +1,63 @@
-// Mini Project - Pertemuan 11-12: Controller Mahasiswa
-// TODO 1: lengkapi getAll agar mendukung filtering, sorting, pagination, dan projection.
-// getById/create/update/remove sudah lengkap (dari Pertemuan 9-10).
-
 const Mahasiswa = require("../models/mahasiswaModel");
 
 const MAX_LIMIT = 100;
 
 // GET /mahasiswa?prodiId=...&sort=nama&page=1&limit=10&fields=nama,nim
 exports.getAll = async (req, res) => {
-  // TODO: bangun object filter - jika req.query.prodiId ada, tambahkan ke filter
+  // Filtering
   const filter = {};
 
-  // TODO: ambil page dari req.query.page (default 1, minimal 1)
-  // TODO: ambil limit dari req.query.limit (default 10), batasi maksimum dengan MAX_LIMIT
-  // TODO: ambil sortField dari req.query.sort (default 'createdAt')
-  // TODO: ambil projection dari req.query.fields (ubah "nama,nim" menjadi "nama nim")
+  if (req.query.prodiId) {
+    filter.prodiId = req.query.prodiId;
+  }
 
-  // TODO: panggil Mahasiswa.find(filter).populate('prodiId').select(projection)
-  //   .sort({ [sortField]: 1 }).skip((page - 1) * limit).limit(limit)
-  // TODO: hitung total dengan Mahasiswa.countDocuments(filter)
-  // TODO: kirim res.json({ data, page, limit, total })
+  // Pagination
+  const page = Math.max(parseInt(req.query.page) || 1, 1);
+  const limit = Math.min(
+    Math.max(parseInt(req.query.limit) || 10, 1),
+    MAX_LIMIT,
+  );
+
+  // Sorting
+  const sortField = req.query.sort || "createdAt";
+
+  // Projection
+  const projection = req.query.fields
+    ? req.query.fields.split(",").join(" ")
+    : "";
+
+  try {
+    // Ambil data mahasiswa
+    const data = await Mahasiswa.find(filter)
+      .populate("prodiId")
+      .select(projection)
+      .sort({ [sortField]: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    // Hitung total data sesuai filter
+    const total = await Mahasiswa.countDocuments(filter);
+
+    // Kirim response
+    res.json({
+      data,
+      page,
+      limit,
+      total,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Terjadi kesalahan saat mengambil data mahasiswa",
+      error: error.message,
+    });
+  }
 };
 
 exports.getById = async (req, res) => {
   const data = await Mahasiswa.findById(req.params.id).populate("prodiId");
+
   if (!data) throw { status: 404, message: "Tidak ditemukan" };
+
   res.json(data);
 };
 
@@ -38,12 +71,16 @@ exports.update = async (req, res) => {
     new: true,
     runValidators: true,
   });
+
   if (!data) throw { status: 404, message: "Tidak ditemukan" };
+
   res.json(data);
 };
 
 exports.remove = async (req, res) => {
   const data = await Mahasiswa.findByIdAndDelete(req.params.id);
+
   if (!data) throw { status: 404, message: "Tidak ditemukan" };
+
   res.status(204).send();
 };
