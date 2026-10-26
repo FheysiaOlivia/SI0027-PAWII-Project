@@ -1,17 +1,61 @@
-// Mini Project - Pertemuan 9-10: Controller Prodi (sudah lengkap)
+// // const Prodi = require("../models/prodiModel");
+
+// // exports.getAll = async (req, res, next) => {
+// //   try {
+// //     const data = await Prodi.find();
+// //     res.json(data);
+// //   } catch (err) {
+// //     next(err);
+// //   }
+// // };
+
+// // exports.create = async (req, res, next) => {
+// //   try {
+// //     const prodi = await Prodi.create(req.body);
+// //     res.status(201).json(prodi);
+// //   } catch (err) {
+// //     next(err);
+// //   }
+// // };
+
+
+// const Prodi = require("../models/prodiModel");
+
+// exports.getAll = async (req, res, next) => {
+//   try {
+//     const data = await Prodi.find();
+//     res.json(data);
+//   } catch (err) {
+//     next(err);
+//   }
+// };
+
+// exports.create = async (req, res, next) => {
+//   try {
+//     const prodi = await Prodi.create(req.body);
+//     res.status(201).json(prodi);
+//   } catch (err) {
+//     next(err);
+//   }
+// };
+
 
 const Prodi = require("../models/prodiModel");
 
-exports.getAll = async (req, res) => {
-  const data = await Prodi.find();
-  res.json(data);
+exports.getAll = async (req, res, next) => {
+  try {
+    const data = await Prodi.find();
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
 };
 
-exports.create = async (req, res) => {
+exports.create = async (req, res, next) => {
   try {
     const prodi = await Prodi.create(req.body);
     res.status(201).json(prodi);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    next(err);
   }
 };

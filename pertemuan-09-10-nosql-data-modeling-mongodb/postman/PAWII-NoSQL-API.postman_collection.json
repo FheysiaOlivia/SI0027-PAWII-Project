@@ -1,337 +1,506 @@
 {
-  "info": {
-    "name": "PAWII - API NoSQL Data Modeling (Mahasiswa & Prodi)",
-    "description": "Pengujian otomatis Pertemuan 9-10. Jalankan berurutan: Prodi -> Mahasiswa. Perintah: newman run PAWII-NoSQL-API.postman_collection.json -e PAWII-NoSQL-API.postman_environment.json",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "item": [
-    {
-      "name": "Prodi",
-      "item": [
-        {
-          "name": "POST Tambah Prodi",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code 201', () => pm.response.to.have.status(201));",
-                  "const body = pm.response.json();",
-                  "pm.test('Response memiliki _id dan nama yang sesuai', () => {",
-                  "  pm.expect(body).to.have.property('_id');",
-                  "  pm.expect(body.nama).to.eql('Sistem Informasi');",
-                  "});",
-                  "pm.test('Jenjang default adalah S1', () => pm.expect(body.jenjang).to.eql('S1'));",
-                  "pm.environment.set('prodiId', body._id);"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"nama\": \"Sistem Informasi\"\n}" },
-            "url": { "raw": "{{base_url}}/prodi", "host": ["{{base_url}}"], "path": ["prodi"] }
-          }
-        },
-        {
-          "name": "POST Tambah Prodi - Validasi Gagal",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code 400', () => pm.response.to.have.status(400));",
-                  "pm.test('Response memiliki pesan error', () => pm.expect(pm.response.json()).to.have.property('message'));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{}" },
-            "url": { "raw": "{{base_url}}/prodi", "host": ["{{base_url}}"], "path": ["prodi"] }
-          }
-        },
-        {
-          "name": "GET Semua Prodi",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code 200', () => pm.response.to.have.status(200));",
-                  "const body = pm.response.json();",
-                  "pm.test('Response berupa array', () => pm.expect(body).to.be.an('array'));",
-                  "pm.test('Berisi prodi yang baru dibuat', () => {",
-                  "  pm.expect(body.map(p => p._id)).to.include(pm.environment.get('prodiId'));",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": { "raw": "{{base_url}}/prodi", "host": ["{{base_url}}"], "path": ["prodi"] }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Mahasiswa",
-      "item": [
-        {
-          "name": "POST Tambah Mahasiswa",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "// NIM harus unik, jadi dibuat baru setiap kali request dijalankan",
-                  "pm.environment.set('nim', 'T' + Date.now());",
-                  "",
-                  "// Jika prodiId belum ada (request dijalankan sendiri), buat prodi terlebih dahulu",
-                  "if (!pm.environment.get('prodiId')) {",
-                  "  pm.sendRequest({",
-                  "    url: pm.environment.get('base_url') + '/prodi',",
-                  "    method: 'POST',",
-                  "    header: { 'Content-Type': 'application/json' },",
-                  "    body: { mode: 'raw', raw: JSON.stringify({ nama: 'Sistem Informasi' }) }",
-                  "  }, (err, res) => {",
-                  "    if (err) { console.error('Gagal membuat prodi:', err); return; }",
-                  "    pm.environment.set('prodiId', res.json()._id);",
-                  "  });",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code 201', () => pm.response.to.have.status(201));",
-                  "const body = pm.response.json();",
-                  "pm.test('Response memiliki _id', () => pm.expect(body).to.have.property('_id'));",
-                  "pm.test('Data tersimpan dengan benar', () => {",
-                  "  pm.expect(body.nama).to.eql('Citra');",
-                  "  pm.expect(body.nim).to.eql(pm.environment.get('nim'));",
-                  "  pm.expect(body.alamat.kota).to.eql('Bandung');",
-                  "  pm.expect(body.prodiId).to.eql(pm.environment.get('prodiId'));",
-                  "});",
-                  "pm.environment.set('mahasiswaId', body._id);"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nama\": \"Citra\",\n  \"nim\": \"{{nim}}\",\n  \"alamat\": { \"jalan\": \"Jl. Merdeka 1\", \"kota\": \"Bandung\" },\n  \"prodiId\": \"{{prodiId}}\"\n}"
-            },
-            "url": { "raw": "{{base_url}}/mahasiswa", "host": ["{{base_url}}"], "path": ["mahasiswa"] }
-          }
-        },
-        {
-          "name": "POST Tambah Mahasiswa - Validasi Gagal",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code 400', () => pm.response.to.have.status(400));",
-                  "pm.test('Response memiliki pesan error', () => pm.expect(pm.response.json()).to.have.property('message'));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"jurusan\": \"tanpa nama dan nim\"\n}" },
-            "url": { "raw": "{{base_url}}/mahasiswa", "host": ["{{base_url}}"], "path": ["mahasiswa"] }
-          }
-        },
-        {
-          "name": "POST Tambah Mahasiswa - NIM Duplikat",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code 400 untuk NIM duplikat', () => pm.response.to.have.status(400));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"nama\": \"Duplikat\",\n  \"nim\": \"{{nim}}\"\n}" },
-            "url": { "raw": "{{base_url}}/mahasiswa", "host": ["{{base_url}}"], "path": ["mahasiswa"] }
-          }
-        },
-        {
-          "name": "GET Semua Mahasiswa",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code 200', () => pm.response.to.have.status(200));",
-                  "const body = pm.response.json();",
-                  "pm.test('Response berupa array', () => pm.expect(body).to.be.an('array'));",
-                  "pm.test('Berisi mahasiswa yang baru dibuat', () => {",
-                  "  pm.expect(body.map(m => m._id)).to.include(pm.environment.get('mahasiswaId'));",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": { "raw": "{{base_url}}/mahasiswa", "host": ["{{base_url}}"], "path": ["mahasiswa"] }
-          }
-        },
-        {
-          "name": "GET Satu Mahasiswa (prodi ter-populate)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code 200', () => pm.response.to.have.status(200));",
-                  "const body = pm.response.json();",
-                  "pm.test('_id sesuai', () => pm.expect(body._id).to.eql(pm.environment.get('mahasiswaId')));",
-                  "pm.test('prodiId ter-populate menjadi objek', () => {",
-                  "  pm.expect(body.prodiId).to.be.an('object');",
-                  "  pm.expect(body.prodiId.nama).to.eql('Sistem Informasi');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": { "raw": "{{base_url}}/mahasiswa/{{mahasiswaId}}", "host": ["{{base_url}}"], "path": ["mahasiswa", "{{mahasiswaId}}"] }
-          }
-        },
-        {
-          "name": "GET Satu Mahasiswa - Tidak Ditemukan",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code 404', () => pm.response.to.have.status(404));",
-                  "pm.test('Pesan adalah Tidak ditemukan', () => pm.expect(pm.response.json().message).to.eql('Tidak ditemukan'));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": { "raw": "{{base_url}}/mahasiswa/000000000000000000000000", "host": ["{{base_url}}"], "path": ["mahasiswa", "000000000000000000000000"] }
-          }
-        },
-        {
-          "name": "PUT Ubah Mahasiswa",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code 200', () => pm.response.to.have.status(200));",
-                  "const body = pm.response.json();",
-                  "pm.test('Nama berhasil diubah', () => pm.expect(body.nama).to.eql('Citra Updated'));",
-                  "pm.test('_id tidak berubah', () => pm.expect(body._id).to.eql(pm.environment.get('mahasiswaId')));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"nama\": \"Citra Updated\"\n}" },
-            "url": { "raw": "{{base_url}}/mahasiswa/{{mahasiswaId}}", "host": ["{{base_url}}"], "path": ["mahasiswa", "{{mahasiswaId}}"] }
-          }
-        },
-        {
-          "name": "DELETE Hapus Mahasiswa",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code 204', () => pm.response.to.have.status(204));",
-                  "pm.test('Body kosong', () => pm.expect(pm.response.text()).to.eql(''));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": { "raw": "{{base_url}}/mahasiswa/{{mahasiswaId}}", "host": ["{{base_url}}"], "path": ["mahasiswa", "{{mahasiswaId}}"] }
-          }
-        },
-        {
-          "name": "GET Mahasiswa Setelah Dihapus - Tidak Ditemukan",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code 404', () => pm.response.to.have.status(404));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": { "raw": "{{base_url}}/mahasiswa/{{mahasiswaId}}", "host": ["{{base_url}}"], "path": ["mahasiswa", "{{mahasiswaId}}"] }
-          }
-        },
-        {
-          "name": "DELETE Mahasiswa - Sudah Terhapus",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code 404', () => pm.response.to.have.status(404));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": { "raw": "{{base_url}}/mahasiswa/{{mahasiswaId}}", "host": ["{{base_url}}"], "path": ["mahasiswa", "{{mahasiswaId}}"] }
-          }
-        }
-      ]
-    }
-  ]
+    "info":  {
+                 "name":  "PAWII - API NoSQL Data Modeling (Mahasiswa \u0026 Prodi)",
+                 "description":  "Pengujian otomatis Pertemuan 9-10. Jalankan berurutan: Prodi -\u003e Mahasiswa. Perintah: newman run PAWII-NoSQL-API.postman_collection.json -e PAWII-NoSQL-API.postman_environment.json",
+                 "schema":  "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+             },
+    "item":  [
+                 {
+                     "name":  "Prodi",
+                     "item":  [
+                                  {
+                                      "name":  "POST Tambah Prodi",
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code 201\u0027, () =\u003e pm.response.to.have.status(201));",
+                                                                                    "const body = pm.response.json();",
+                                                                                    "pm.test(\u0027Response memiliki _id dan nama yang sesuai\u0027, () =\u003e {",
+                                                                                    "  pm.expect(body).to.have.property(\u0027_id\u0027);",
+                                                                                    "  pm.expect(body.nama).to.eql(\u0027Sistem Informasi\u0027);",
+                                                                                    "});",
+                                                                                    "pm.test(\u0027Jenjang default adalah S1\u0027, () =\u003e pm.expect(body.jenjang).to.eql(\u0027S1\u0027));",
+                                                                                    "pm.environment.set(\u0027prodiId\u0027, body._id);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ],
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"nama\": \"Sistem Informasi\"\n}"
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{base_url}}/prodi",
+                                                                  "host":  [
+                                                                               "{{base_url}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "prodi"
+                                                                           ]
+                                                              }
+                                                  }
+                                  },
+                                  {
+                                      "name":  "POST Tambah Prodi - Validasi Gagal",
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code 400\u0027, () =\u003e pm.response.to.have.status(400));",
+                                                                                    "pm.test(\u0027Response memiliki pesan error\u0027, () =\u003e pm.expect(pm.response.json()).to.have.property(\u0027message\u0027));"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ],
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{}"
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{base_url}}/prodi",
+                                                                  "host":  [
+                                                                               "{{base_url}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "prodi"
+                                                                           ]
+                                                              }
+                                                  }
+                                  },
+                                  {
+                                      "name":  "GET Semua Prodi",
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code 200\u0027, () =\u003e pm.response.to.have.status(200));",
+                                                                                    "const body = pm.response.json();",
+                                                                                    "pm.test(\u0027Response berupa array\u0027, () =\u003e pm.expect(body).to.be.an(\u0027array\u0027));",
+                                                                                    "pm.test(\u0027Berisi prodi yang baru dibuat\u0027, () =\u003e {",
+                                                                                    "  pm.expect(body.map(p =\u003e p._id)).to.include(pm.environment.get(\u0027prodiId\u0027));",
+                                                                                    "});"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ],
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{base_url}}/prodi",
+                                                                  "host":  [
+                                                                               "{{base_url}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "prodi"
+                                                                           ]
+                                                              }
+                                                  }
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Mahasiswa",
+                     "item":  [
+                                  {
+                                      "name":  "POST Tambah Mahasiswa",
+                                      "event":  [
+                                                    {
+                                                        "listen":  "prerequest",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "// NIM harus unik, jadi dibuat baru setiap kali request dijalankan",
+                                                                                    "pm.environment.set(\u0027nim\u0027, \u0027T\u0027 + Date.now());",
+                                                                                    "",
+                                                                                    "// Jika prodiId belum ada (request dijalankan sendiri), buat prodi terlebih dahulu",
+                                                                                    "if (!pm.environment.get(\u0027prodiId\u0027)) {",
+                                                                                    "  pm.sendRequest({",
+                                                                                    "    url: pm.environment.get(\u0027base_url\u0027) + \u0027/prodi\u0027,",
+                                                                                    "    method: \u0027POST\u0027,",
+                                                                                    "    header: { \u0027Content-Type\u0027: \u0027application/json\u0027 },",
+                                                                                    "    body: { mode: \u0027raw\u0027, raw: JSON.stringify({ nama: \u0027Sistem Informasi\u0027 }) }",
+                                                                                    "  }, (err, res) =\u003e {",
+                                                                                    "    if (err) { console.error(\u0027Gagal membuat prodi:\u0027, err); return; }",
+                                                                                    "    pm.environment.set(\u0027prodiId\u0027, res.json()._id);",
+                                                                                    "  });",
+                                                                                    "}"
+                                                                                ]
+                                                                   }
+                                                    },
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code 201\u0027, () =\u003e pm.response.to.have.status(201));",
+                                                                                    "const body = pm.response.json();",
+                                                                                    "pm.test(\u0027Response memiliki _id\u0027, () =\u003e pm.expect(body).to.have.property(\u0027_id\u0027));",
+                                                                                    "pm.test(\u0027Data tersimpan dengan benar\u0027, () =\u003e {",
+                                                                                    "  pm.expect(body.nama).to.eql(\u0027Citra\u0027);",
+                                                                                    "  pm.expect(body.nim).to.eql(pm.environment.get(\u0027nim\u0027));",
+                                                                                    "  pm.expect(body.alamat.kota).to.eql(\u0027Bandung\u0027);",
+                                                                                    "  pm.expect(body.prodiId).to.eql(pm.environment.get(\u0027prodiId\u0027));",
+                                                                                    "});",
+                                                                                    "pm.environment.set(\u0027mahasiswaId\u0027, body._id);"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ],
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"nama\": \"Citra\",\n  \"nim\": \"{{nim}}\",\n  \"alamat\": { \"jalan\": \"Jl. Merdeka 1\", \"kota\": \"Bandung\" },\n  \"prodiId\": \"{{prodiId}}\"\n}"
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{base_url}}/mahasiswa",
+                                                                  "host":  [
+                                                                               "{{base_url}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "mahasiswa"
+                                                                           ]
+                                                              }
+                                                  }
+                                  },
+                                  {
+                                      "name":  "POST Tambah Mahasiswa - Validasi Gagal",
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code 400\u0027, () =\u003e pm.response.to.have.status(400));",
+                                                                                    "pm.test(\u0027Response memiliki pesan error\u0027, () =\u003e pm.expect(pm.response.json()).to.have.property(\u0027message\u0027));"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ],
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"jurusan\": \"tanpa nama dan nim\"\n}"
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{base_url}}/mahasiswa",
+                                                                  "host":  [
+                                                                               "{{base_url}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "mahasiswa"
+                                                                           ]
+                                                              }
+                                                  }
+                                  },
+                                  {
+                                      "name":  "POST Tambah Mahasiswa - NIM Duplikat",
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code 409 untuk NIM duplikat\u0027, () =\u003e pm.response.to.have.status(409));"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ],
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"nama\": \"Duplikat\",\n  \"nim\": \"{{nim}}\"\n}"
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{base_url}}/mahasiswa",
+                                                                  "host":  [
+                                                                               "{{base_url}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "mahasiswa"
+                                                                           ]
+                                                              }
+                                                  }
+                                  },
+                                  {
+                                      "name":  "GET Semua Mahasiswa",
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code 200\u0027, () =\u003e pm.response.to.have.status(200));",
+                                                                                    "const body = pm.response.json();",
+                                                                                    "pm.test(\u0027Response memiliki array data\u0027, () =\u003e pm.expect(body.data).to.be.an(\u0027array\u0027));",
+                                                                                    "pm.test(\u0027Berisi mahasiswa yang baru dibuat\u0027, () =\u003e {",
+                                                                                    "  pm.expect(body.data.map(m =\u003e m._id)).to.include(pm.environment.get(\u0027mahasiswaId\u0027));",
+                                                                                    "});"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ],
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{base_url}}/mahasiswa",
+                                                                  "host":  [
+                                                                               "{{base_url}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "mahasiswa"
+                                                                           ]
+                                                              }
+                                                  }
+                                  },
+                                  {
+                                      "name":  "GET Satu Mahasiswa (prodi ter-populate)",
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code 200\u0027, () =\u003e pm.response.to.have.status(200));",
+                                                                                    "const body = pm.response.json();",
+                                                                                    "pm.test(\u0027_id sesuai\u0027, () =\u003e pm.expect(body._id).to.eql(pm.environment.get(\u0027mahasiswaId\u0027)));",
+                                                                                    "pm.test(\u0027prodiId ter-populate menjadi objek\u0027, () =\u003e {",
+                                                                                    "  pm.expect(body.prodiId).to.be.an(\u0027object\u0027);",
+                                                                                    "  pm.expect(body.prodiId.nama).to.eql(\u0027Sistem Informasi\u0027);",
+                                                                                    "});"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ],
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{base_url}}/mahasiswa/{{mahasiswaId}}",
+                                                                  "host":  [
+                                                                               "{{base_url}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "mahasiswa",
+                                                                               "{{mahasiswaId}}"
+                                                                           ]
+                                                              }
+                                                  }
+                                  },
+                                  {
+                                      "name":  "GET Satu Mahasiswa - Tidak Ditemukan",
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code 404\u0027, () =\u003e pm.response.to.have.status(404));",
+                                                                                    "pm.test(\u0027Pesan mahasiswa tidak ditemukan\u0027, () =\u003e pm.expect(pm.response.json().message).to.eql(\u0027Mahasiswa tidak ditemukan\u0027));"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ],
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{base_url}}/mahasiswa/000000000000000000000000",
+                                                                  "host":  [
+                                                                               "{{base_url}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "mahasiswa",
+                                                                               "000000000000000000000000"
+                                                                           ]
+                                                              }
+                                                  }
+                                  },
+                                  {
+                                      "name":  "PUT Ubah Mahasiswa",
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code 200\u0027, () =\u003e pm.response.to.have.status(200));",
+                                                                                    "const body = pm.response.json();",
+                                                                                    "pm.test(\u0027Nama berhasil diubah\u0027, () =\u003e pm.expect(body.nama).to.eql(\u0027Citra Updated\u0027));",
+                                                                                    "pm.test(\u0027_id tidak berubah\u0027, () =\u003e pm.expect(body._id).to.eql(pm.environment.get(\u0027mahasiswaId\u0027)));"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ],
+                                      "request":  {
+                                                      "method":  "PUT",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"nama\": \"Citra Updated\"\n}"
+                                                               },
+                                                      "url":  {
+                                                                  "raw":  "{{base_url}}/mahasiswa/{{mahasiswaId}}",
+                                                                  "host":  [
+                                                                               "{{base_url}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "mahasiswa",
+                                                                               "{{mahasiswaId}}"
+                                                                           ]
+                                                              }
+                                                  }
+                                  },
+                                  {
+                                      "name":  "DELETE Hapus Mahasiswa",
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code 204\u0027, () =\u003e pm.response.to.have.status(204));",
+                                                                                    "pm.test(\u0027Body kosong\u0027, () =\u003e pm.expect(pm.response.text()).to.eql(\u0027\u0027));"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ],
+                                      "request":  {
+                                                      "method":  "DELETE",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{base_url}}/mahasiswa/{{mahasiswaId}}",
+                                                                  "host":  [
+                                                                               "{{base_url}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "mahasiswa",
+                                                                               "{{mahasiswaId}}"
+                                                                           ]
+                                                              }
+                                                  }
+                                  },
+                                  {
+                                      "name":  "GET Mahasiswa Setelah Dihapus - Tidak Ditemukan",
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code 404\u0027, () =\u003e pm.response.to.have.status(404));"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ],
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{base_url}}/mahasiswa/{{mahasiswaId}}",
+                                                                  "host":  [
+                                                                               "{{base_url}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "mahasiswa",
+                                                                               "{{mahasiswaId}}"
+                                                                           ]
+                                                              }
+                                                  }
+                                  },
+                                  {
+                                      "name":  "DELETE Mahasiswa - Sudah Terhapus",
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "pm.test(\u0027Status code 404\u0027, () =\u003e pm.response.to.have.status(404));"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ],
+                                      "request":  {
+                                                      "method":  "DELETE",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{base_url}}/mahasiswa/{{mahasiswaId}}",
+                                                                  "host":  [
+                                                                               "{{base_url}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "mahasiswa",
+                                                                               "{{mahasiswaId}}"
+                                                                           ]
+                                                              }
+                                                  }
+                                  }
+                              ]
+                 }
+             ]
 }

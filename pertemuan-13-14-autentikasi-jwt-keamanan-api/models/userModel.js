@@ -1,5 +1,3 @@
-// Mini Project - Pertemuan 13-14: Model User (sudah lengkap)
-
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({

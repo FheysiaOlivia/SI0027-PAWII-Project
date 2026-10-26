@@ -1,7 +1,5 @@
 // Mini Project - Pertemuan 13-14: Controller Mahasiswa (sudah lengkap, dari Pertemuan 11-12)
-
 const Mahasiswa = require("../models/mahasiswaModel");
-
 const MAX_LIMIT = 100;
 
 exports.getAll = async (req, res) => {
