@@ -5,9 +5,9 @@ function Tentang() {
     <div className="tentang">
       <h2>Tentang Aplikasi</h2>
       <p>
-        Aplikasi contoh untuk mempelajari arsitektur berbasis komponen pada
-        SPA, termasuk cara berpindah halaman lewat routing tanpa memuat ulang
-        seluruh aplikasi dari server.
+        Aplikasi contoh untuk mempelajari arsitektur berbasis komponen pada SPA,
+        termasuk cara berpindah halaman lewat routing tanpa memuat ulang seluruh
+        aplikasi dari server.
       </p>
     </div>
   );
