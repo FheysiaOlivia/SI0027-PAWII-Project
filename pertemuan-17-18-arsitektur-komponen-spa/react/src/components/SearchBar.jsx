@@ -10,7 +10,7 @@ function SearchBar({ keyword, onSearch }) {
       // TODO: set value={keyword}
       value={keyword}
       // TODO: set onChange agar memanggil onSearch(e.target.value)
-      onChange={onSearch(e.target.value)}
+      onChange={(e) => onSearch(e.target.value)}
     />
   );
 }

@@ -1,5 +1,10 @@
 <!-- TODO: tambahkan <p class="empty" *ngIf="mahasiswa.length === 0"> jika data kosong -->
-
+<p class="empty" *ngIf="mahasiswa.length === 0">Tidak ada mahsiswa yang cocok </p>
 <div class="mahasiswa-list">
   <!-- TODO: gunakan <app-mahasiswa-card *ngFor="let m of mahasiswa" [nama]="m.nama" [nim]="m.nim"></app-mahasiswa-card> -->
+  <app-mahasiswa-card 
+  *ngFor="let m of mahasiswa" 
+  [nama]="m.nama" 
+  [nim]="m.nim">
+  </app-mahasiswa-card>
 </div>
